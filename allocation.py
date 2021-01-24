@@ -1,7 +1,7 @@
 from linked_list import Node, LinkedList
 
 class Allocation:
-    def __init__(self, capacity: int, capacity_unit: str, block: int):
+    def __init__(self, capacity: int, capacity_unit: str, block: int) -> None:
         '''
         Initializes an object that represents a single file manager. Four private instance variables are created:
             capacity_used: amount of capacity used in Bytes
@@ -30,7 +30,7 @@ class Allocation:
         self._cache = {}
         print('Done!')
 
-    def save(self, file_id: str, size: int, size_unit: str) -> []:
+    def save(self, file_id: str, size: int, size_unit: str) -> list:
         '''
         Takes file_id and saves it in a given location, returns list of block sets that is assigned to the file
 
@@ -39,6 +39,8 @@ class Allocation:
         :param size_unit: unit of file size. Must be one of B, KB, MB, or GB
         :return: list of blocks that is assigned to the file given
         '''
+        if self._cache.get(file_id):
+            raise ValueError('file_id already exists')
         if size <= 0:
             raise ValueError('Size must be greater than 0')
 
@@ -54,14 +56,21 @@ class Allocation:
         self._update_capacity_used(self._block * len(location))
         return location
 
-    def delete(self, file_id: str):
+    def delete(self, file_id: str) -> None:
         '''
-        Removes allocation for provided file_id, and returns it to the pool to allow it to be re-allocated.
+        Removes allocation for provided file_id, and returns it's assigned blocks to the pool to be re-allocated.
 
         :param file_id: desired file_id as a string
         '''
         print('Deleting file...')
-
+        location = self._cache.get(file_id)
+        if location:
+            del(self._cache[file_id])
+            self._add_availability(location)
+            self._update_capacity_used(-1 * self._block * len(location))
+            print('File deleted, blocks ready to be reallocated!')
+        else:
+            raise ValueError('file_id does not exist')
 
     def read(self, file_id: str) -> list:
         '''
@@ -108,30 +117,32 @@ class Allocation:
         '''
         print('Allocating blocks using first fit...')
 
-        curr = self._available  # current node
-        chunk_prestart = curr  # node preceeding node chunk starts on
-        chunk_end = None  # node chunk ends on
-        chunk_size = 0  # size of chunk currently being explored
+        no_error = False  # Cannot use chunk_postend as indicator of no error, as it may be None if last block assigned
+        curr = self._available
+        chunk_prestart = curr  # Node preceeding chunk
+        chunk_postend = None  # Node succeeding chunk
+        chunk_size = 0  # Size of current chunk
         while curr.next:
-            if curr.next.val == chunk_prestart.next.val + chunk_size:
+            if curr.next.val == chunk_prestart.next.val + chunk_size:  # Nodes are adjacent
                 chunk_size += 1
                 if chunk_size * self._block >= size:
-                    chunk_end = curr.next.next
+                    chunk_postend = curr.next.next
+                    no_error = True
                     break
-            else:
+            else:  # Nodes not adjacent
                 chunk_prestart = curr
                 chunk_size = 1
-            curr = curr.next
+            curr = curr.next  # Update to next as last step so current pointer can be assigned as prestart if needed
 
-        if chunk_end:  # sufficient block was found
+        if no_error:  # Sufficient block was found
             first_block = chunk_prestart.next.val
-            chunk_prestart.next = chunk_end
+            chunk_prestart.next = chunk_postend
             print('Blocks allocated!')
             return [x for x in range(first_block, first_block + chunk_size)]
         else:
             raise ValueError('No chunk large enough to be allocated for given size')
 
-    def _cache_location(self, file_id: str, location: list):
+    def _cache_location(self, file_id: str, location: list) -> None:
         '''
         Caches file location in instance cache.
         '''
@@ -139,7 +150,7 @@ class Allocation:
         self._cache[file_id] = location
         print('Location cached!')
 
-    def _update_capacity_used(self, size: int):
+    def _update_capacity_used(self, size: int) -> None:
         '''
         Updates capacity used (either positive or negative size)
         '''
@@ -149,7 +160,7 @@ class Allocation:
 
     def _to_bytes(self, size: int, unit: str) -> int:
         '''
-        Translates unit to bytes
+        Translates size to bytes according to given unit
         '''
         conversion_unit = unit.lower()
         if (conversion_unit not in ['b', 'kb', 'mb', 'gb']):
@@ -165,7 +176,42 @@ class Allocation:
 
         return converted_size
 
-    def _print_availability(self):
+    def _add_availability(self, blocks: list) -> None:
+        '''
+        Return availability of blocks to the availability linked list.
+
+        :param location: sorted list of blocks to be returned and reallocated
+        '''
+        # Blocks used by one file always adjacent, so build a linked list
+        blocks_linked = LinkedList()
+        curr_chunk = blocks_linked
+        for block in blocks:
+            curr_chunk.next = Node(block)
+            curr_chunk = curr_chunk.next
+
+        # Search through availability to find the gap blocks to be returned to
+        # Note assumption is linked list will always be sorted in ascending order
+        chunk_prestart = self._available  # Node at which chunk should be inserted
+        chunk_postend = None  # Sucessive node after chunk
+        chunk_min = blocks[0]  # Lowest block in chunk
+        chunk_max = blocks[len(blocks)-1]  # Highest block in chunk
+
+        if self._available.next:
+            curr = self._available.next
+            while curr:
+                if chunk_min > curr.val:
+                    chunk_prestart = curr
+                if chunk_max < curr.val:
+                    chunk_postend = curr
+                if chunk_prestart and chunk_postend:
+                    break
+                curr = curr.next
+
+        chunk_prestart.next = blocks_linked.next
+        curr_chunk.next = chunk_postend
+
+
+    def _print_availability(self) -> None:
         '''
         For debugging purposes
         '''
