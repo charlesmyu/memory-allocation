@@ -7,14 +7,13 @@ class AllocationCli():
         print('Created by Charles Yu')
         print()
 
-        size, unit = self.obtain_size_and_unit()
-        print('Please enter block size in KB: ')
-        block = input()
-        print('Please select whether first fit or best fit allocation is to be used. Enter one of best or first: ')
+        size, unit = self.obtain_size_and_unit('drive capacity')
+        block_size, block_unit = self.obtain_size_and_unit('block size')
+        print('Please select whether first fit or best fit allocation is to be used. Enter one of "best" or "first": ')
         algorithm = input()
         print()
 
-        memory = allocation.Allocation(size, unit, int(block), algorithm)
+        memory = allocation.Allocation(size, block_size, unit, block_unit, algorithm)
         exit = False
 
         print()
@@ -32,7 +31,7 @@ class AllocationCli():
             print()
             if choice == 1:
                 file_id = self.obtain_file_id()
-                size, unit = self.obtain_size_and_unit()
+                size, unit = self.obtain_size_and_unit('file size')
                 print()
                 try:
                     location = memory.save(file_id, size, unit)
@@ -70,22 +69,27 @@ class AllocationCli():
                 print('Your choice was not recognized. Please try again.')
 
         print('Exiting CLI. Thank you!')
+        print()
 
     def obtain_file_id(self):
         print('Please enter a file ID: ')
         file_id = input()
         return file_id
 
-    def obtain_size_and_unit(self):
-        print('Please enter size in B, KB, MB, or GB: ')
+    def obtain_size_and_unit(self, display_string: str):
+        print('Please enter {} in B, KB, MB, GB, or TB: '.format(display_string))
         size = input()
+        while not size.isdigit():
+            print('That {} is not valid. Please enter a positive integer.'.format(display_string))
+            print('Please enter {} in B, KB, MB, GB, or TB: '.format(display_string))
+            size = input()
         size = int(size)
-        print('Please enter unit used for size: ')
+        print('Please enter unit used for {}: '.format(display_string))
         unit = input()
         unit = unit.lower()
-        while unit not in ['b', 'kb', 'mb', 'gb']:
-            print('That unit is not valid, size must be one of B, KB, MB, or GB.')
-            print('Please enter unit used for size: ')
+        while unit not in ['b', 'kb', 'mb', 'gb', 'tb']:
+            print('That unit is not valid, {} must be one of B, KB, MB, GB, or TB.'.format(display_string))
+            print('Please enter unit used for {}: '.format(display_string))
             unit = input()
             unit = unit.lower()
         return size, unit

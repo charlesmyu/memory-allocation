@@ -4,11 +4,11 @@ import allocation
 class TestGeneral(unittest.TestCase):
     def test_wrong_unit(self):
         with self.assertRaises(ValueError):
-            allocation.Allocation(1, 'ab', 128)
+            allocation.Allocation(1, 128, 'ab')
 
 class TestReadMethods(unittest.TestCase):
     def initialize_standard(self):
-        return allocation.Allocation(1, 'mb', 128, 'first')
+        return allocation.Allocation(1, 128, 'mb', 'kb', 'first')
 
     def test_read(self):
         memory = self.initialize_standard()
@@ -28,7 +28,7 @@ class TestReadMethods(unittest.TestCase):
 
 class TestFirstFitSaveMethods(unittest.TestCase):
     def initialize_standard(self):
-        return allocation.Allocation(1, 'mb', 128, 'first')
+        return allocation.Allocation(1, 128, 'mb', 'kb', 'first')
 
     def save_full(self, memory):
         counter = 'a'
@@ -122,7 +122,7 @@ class TestFirstFitSaveMethods(unittest.TestCase):
 
 class TestBestFitSaveMethods(unittest.TestCase):
     def initialize_standard(self):
-        return allocation.Allocation(1, 'mb', 128)
+        return allocation.Allocation(1, 128, 'mb', 'kb')
 
     def save_full(self, memory):
         counter = 'a'
@@ -225,7 +225,7 @@ class TestBestFitSaveMethods(unittest.TestCase):
 
 class TestDeleteMethods(unittest.TestCase):
     def initialize_standard(self):
-        return allocation.Allocation(1, 'mb', 128, 'first')
+        return allocation.Allocation(1, 128, 'mb', 'kb', 'first')
 
     def save_full(self, memory):
         counter = 'a'

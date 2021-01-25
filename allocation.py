@@ -2,7 +2,7 @@ from support.linked_list import Node, LinkedList
 import math
 
 class Allocation:
-    def __init__(self, capacity: int, capacity_unit: str, block: int, allocation_algorithm: str = 'best') -> None:
+    def __init__(self, capacity: int, block: int, capacity_unit: str = 'mb', block_unit: str = 'kb', allocation_algorithm: str = 'best') -> None:
         '''
         Initializes an object that represents a single file manager. Four private instance variables are created:
             capacity_used: amount of capacity used in Bytes
@@ -12,15 +12,16 @@ class Allocation:
             cache: hashmap (dict) that is used to store file_id -> list of assigned blocks for quick retrival
 
         :param capacity: Total capacity of memory
-        :param capacity_unit: Unit used for capacity. Must be one of MB or GB
-        :param block: Size of block of memory in KB
+        :param block: Size of block of memory
+        :param capacity_unit: Unit used for capacity. Must be one of B, KB, MB, GB, or TB. Defaults to MB.
+        :param block_unit: Unit used for block size. Must be one of B, KB, MB, GB, or TB. Defaults to KB.
         :param allocation_algorithm: Algorithm used for allocation. Either 'best' or 'first'.
         '''
         self._allocation_algorithm = allocation_algorithm
 
         # Translate all amounts to bytes for standardization
         self._capacity_used = 0
-        self._block = self._to_bytes(block, 'kb')
+        self._block = self._to_bytes(block, block_unit)
         self._capacity = self._to_bytes(capacity, capacity_unit)
 
         print('Number of Blocks: {}'.format(str(int(self._capacity/self._block))))
@@ -246,18 +247,21 @@ class Allocation:
         Translates size to bytes according to given unit
         '''
         conversion_unit = unit.lower()
-        if (conversion_unit not in ['b', 'kb', 'mb', 'gb']):
-            raise ValueError('Incorrect unit, must be one of b, kb, mb, or gb')
+        if (conversion_unit not in ['b', 'kb', 'mb', 'gb', 'tb']):
+            raise ValueError('Incorrect unit, must be one of b, kb, mb, gb, or tb')
 
         converted_size = size
-        if conversion_unit in ['kb', 'mb', 'gb']:
-            converted_size *= 1024
-            if conversion_unit in ['mb', 'gb']:
-                converted_size *= 1024
-                if conversion_unit == 'gb':
-                    converted_size *= 1024
+        unit_num = 0
+        if conversion_unit == 'kb':
+            unit_num = 1
+        elif conversion_unit == 'mb':
+            unit_num = 2
+        elif conversion_unit == 'gb':
+            unit_num = 3
+        elif conversion_unit == 'tb':
+            unit_num = 4
 
-        return converted_size
+        return converted_size * (1024**unit_num)
 
     def _add_availability(self, blocks: list) -> None:
         '''
