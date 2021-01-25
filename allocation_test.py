@@ -214,6 +214,17 @@ class TestBestFitSaveMethods(unittest.TestCase):
         memory.save('z', 100, 'kb')
         self.assertEqual(memory.read('z'), [5])
 
+    def test_save_fragmented_best_block_oversized(self):
+        memory = self.initialize_standard()
+        self.save_full(memory)
+        memory.delete('b')
+        memory.delete('c')
+        memory.delete('d')
+        memory.delete('f')
+        memory.delete('g')
+        memory.save('z', 100, 'kb')
+        self.assertEqual(memory.read('z'), [5])
+
     def test_save_fragmented_blocks_oversized(self):
         memory = self.initialize_standard()
         self.save_full(memory)
