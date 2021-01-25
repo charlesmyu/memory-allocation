@@ -114,6 +114,18 @@ class Allocation:
         '''
         return self._capacity - self._capacity_used
 
+    def availability(self) -> str:
+        '''
+        Blocks that have not been allocated
+        '''
+        curr = self._available.next
+        string = str(curr.val)
+        curr = curr.next
+        while curr:
+            string += ' -> ' + str(curr.val)
+            curr = curr.next
+        return string
+
     # Private support functions
     def _allocate_first_location(self, size: int) -> list:
         '''
@@ -131,7 +143,7 @@ class Allocation:
         chunk_postend = None  # Node succeeding chunk
         chunk_size = 0  # Size of current chunk
         while curr.next:
-            if curr.next.val == chunk_prestart.next.val + chunk_size:  # Nodes are adjacent
+            if self._blocks_are_adjacent(curr.next.val, chunk_prestart.next.val, chunk_size):
                 chunk_size += 1
                 if chunk_size * self._block >= size:
                     chunk_postend = curr.next.next
@@ -144,7 +156,10 @@ class Allocation:
 
         if no_error:  # Sufficient block was found
             first_block = chunk_prestart.next.val
+
+            # Remove allocated blocks from linked list
             chunk_prestart.next = chunk_postend
+
             print('Blocks allocated!')
             return [x for x in range(first_block, first_block + chunk_size)]
         else:
@@ -169,34 +184,42 @@ class Allocation:
         chunk_prestart = curr  # Node preceeding chunk
         chunk_size = 0  # Size of current chunk
         while curr.next:
-            if curr.next.val == chunk_prestart.next.val + chunk_size:  # Nodes are adjacent
+            if self._blocks_are_adjacent(curr.next.val, chunk_prestart.next.val, chunk_size):
                 chunk_size += 1
             else:
-                if (not best_chunk_size or chunk_size < best_chunk_size) and chunk_size > chunk_size_needed:
+                if self._chunk_is_valid_and_better(best_chunk_size, chunk_size, chunk_size_needed):
                     best_chunk_size = chunk_size
                     best_chunk_prestart = chunk_prestart
-                elif chunk_size == chunk_size_needed:
-                    best_chunk_size = chunk_size
-                    best_chunk_prestart = chunk_prestart
+                if chunk_size == chunk_size_needed:  # Break if perfect size found, no need to keep searching
                     break
                 chunk_prestart = curr
                 chunk_size = 1
             curr = curr.next
 
-        if (not best_chunk_size or not best_chunk_prestart) and chunk_size > chunk_size_needed:
+        # Do checks for last chunk (not checked in loop)
+        if self._chunk_is_valid_and_better(best_chunk_size, chunk_size, chunk_size_needed):
             best_chunk_size = chunk_size
             best_chunk_prestart = chunk_prestart
 
         if best_chunk_size and best_chunk_prestart:  # Sufficient block was found
             first_block = best_chunk_prestart.next.val
+
+            # Remove allocated blocks from linked list
             best_chunk_postend = best_chunk_prestart
             for i in range(chunk_size_needed + 1):
                 best_chunk_postend = best_chunk_postend.next
             best_chunk_prestart.next = best_chunk_postend
+
             print('Blocks allocated!')
             return [x for x in range(first_block, first_block + chunk_size_needed)]
         else:
             raise ValueError('No chunk large enough to be allocated for given size')
+
+    def _blocks_are_adjacent(self, block_num: int, prestart_num: int, chunk_size: int):
+        return block_num == prestart_num + chunk_size
+
+    def _chunk_is_valid_and_better(self, best_chunk_size: int, chunk_size: int, chunk_size_needed: int):
+        return (not best_chunk_size or chunk_size < best_chunk_size) and chunk_size >= chunk_size_needed
 
     def _cache_location(self, file_id: str, location: list) -> None:
         '''
@@ -265,13 +288,3 @@ class Allocation:
 
         chunk_prestart.next = blocks_linked.next
         curr_chunk.next = chunk_postend
-
-
-    def _print_availability(self) -> None:
-        '''
-        For debugging purposes
-        '''
-        curr = self._available.next
-        while curr:
-            print(curr.val)
-            curr = curr.next
