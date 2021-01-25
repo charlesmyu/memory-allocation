@@ -1,4 +1,4 @@
-from linked_list import Node, LinkedList
+from support.linked_list import Node, LinkedList
 import math
 
 class Allocation:
