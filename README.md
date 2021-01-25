@@ -23,8 +23,12 @@ block size are determined during intialization of the Allocation object.
 Allocation of memory can be done using two methods: best fit or first fit. First fit finds the first chunk large enough
 to accommodate the file size requested. Best fit finds the smallest chunk available that accommodates the requested
 file size. The algorithm can be specified using the `allocation_algorithm` parameter during creation of the Allocation
-object. 
+object.
 
 ## Testing
 Testing script included, run by using `python allocation_test.py` in console. Tests cover read, save, and delete
 functions, including testing of appropriate exceptions when conditions are met.
+
+## CLI
+A CLI has been included for manual testing or other interaction with the file system manager. Run
+`python allocation_cli.py` and follow the instructions to use.

@@ -23,8 +23,6 @@ class Allocation:
         self._block = self._to_bytes(block, 'kb')
         self._capacity = self._to_bytes(capacity, capacity_unit)
 
-        print('Block size: {}B'.format(str(self._block)))
-        print('Capacity: {}B'.format(str(self._capacity)))
         print('Number of Blocks: {}'.format(str(int(self._capacity/self._block))))
 
         print('Creating block list...')
@@ -113,6 +111,12 @@ class Allocation:
         Capacity remaining in bytes
         '''
         return self._capacity - self._capacity_used
+
+    def list_files(self) -> dict:
+        '''
+        List all files in cache
+        '''
+        return self._cache
 
     def availability(self) -> str:
         '''
