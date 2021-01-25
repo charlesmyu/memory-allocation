@@ -1,7 +1,8 @@
 from linked_list import Node, LinkedList
+import math
 
 class Allocation:
-    def __init__(self, capacity: int, capacity_unit: str, block: int) -> None:
+    def __init__(self, capacity: int, capacity_unit: str, block: int, allocation_algorithm: str = 'best') -> None:
         '''
         Initializes an object that represents a single file manager. Four private instance variables are created:
             capacity_used: amount of capacity used in Bytes
@@ -13,7 +14,10 @@ class Allocation:
         :param capacity: Total capacity of memory
         :param capacity_unit: Unit used for capacity. Must be one of MB or GB
         :param block: Size of block of memory in KB
+        :param allocation_algorithm: Algorithm used for allocation. Either 'best' or 'first'.
         '''
+        self._allocation_algorithm = allocation_algorithm
+
         # Translate all amounts to bytes for standardization
         self._capacity_used = 0
         self._block = self._to_bytes(block, 'kb')
@@ -51,7 +55,11 @@ class Allocation:
             raise ValueError('Not enough capacity to store file')
 
         # First fit approach
-        location = self._allocate_first_location(size)
+        location = []
+        if self._allocation_algorithm == 'best':
+            location = self._allocate_best_location(size)
+        else:
+            location = self._allocate_first_location(size)
         self._cache_location(file_id, location)
         self._update_capacity_used(self._block * len(location))
         return location
@@ -139,6 +147,54 @@ class Allocation:
             chunk_prestart.next = chunk_postend
             print('Blocks allocated!')
             return [x for x in range(first_block, first_block + chunk_size)]
+        else:
+            raise ValueError('No chunk large enough to be allocated for given size')
+
+    def _allocate_best_location(self, size: int) -> list:
+        '''
+        Finds best possible location to store file of given size, and allocates it for the file by removing assigned
+        chunks from linked list of available nodes. Note: a chunk refers to a group of successive blocks, and best
+        location is defined as smallest existing chunk that can be allocated for given size
+
+        :param size: size of file in bytes
+        :return: list of blocks to be allocated to file
+        '''
+        print('Allocating blocks using best fit...')
+
+        chunk_size_needed = math.ceil(size/self._block)
+
+        curr = self._available
+        best_chunk_prestart = None
+        best_chunk_size = None
+        chunk_prestart = curr  # Node preceeding chunk
+        chunk_size = 0  # Size of current chunk
+        while curr.next:
+            if curr.next.val == chunk_prestart.next.val + chunk_size:  # Nodes are adjacent
+                chunk_size += 1
+            else:
+                if (not best_chunk_size or chunk_size < best_chunk_size) and chunk_size > chunk_size_needed:
+                    best_chunk_size = chunk_size
+                    best_chunk_prestart = chunk_prestart
+                elif chunk_size == chunk_size_needed:
+                    best_chunk_size = chunk_size
+                    best_chunk_prestart = chunk_prestart
+                    break
+                chunk_prestart = curr
+                chunk_size = 1
+            curr = curr.next
+
+        if (not best_chunk_size or not best_chunk_prestart) and chunk_size > chunk_size_needed:
+            best_chunk_size = chunk_size
+            best_chunk_prestart = chunk_prestart
+
+        if best_chunk_size and best_chunk_prestart:  # Sufficient block was found
+            first_block = best_chunk_prestart.next.val
+            best_chunk_postend = best_chunk_prestart
+            for i in range(chunk_size_needed + 1):
+                best_chunk_postend = best_chunk_postend.next
+            best_chunk_prestart.next = best_chunk_postend
+            print('Blocks allocated!')
+            return [x for x in range(first_block, first_block + chunk_size_needed)]
         else:
             raise ValueError('No chunk large enough to be allocated for given size')
 
