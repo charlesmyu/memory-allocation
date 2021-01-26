@@ -4,7 +4,19 @@ import allocation
 class TestGeneral(unittest.TestCase):
     def test_wrong_unit(self):
         with self.assertRaises(ValueError):
-            allocation.Allocation(1, 128, 'ab')
+            allocation.Allocation(1, 128, 'ab', 'mb')
+        with self.assertRaises(ValueError):
+            allocation.Allocation(1, 128, 'kb', 'ab')
+
+    def test_init_one_block(self):
+        memory = allocation.Allocation(1, 1, 'kb', 'kb')
+        self.assertEqual(memory.list_files(), {})
+        self.assertEqual(memory.availability(), '0')
+
+    def test_init(self):
+        memory = allocation.Allocation(1, 128, 'mb', 'kb')
+        self.assertEqual(memory.list_files(), {})
+        self.assertEqual(memory.availability(), '0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7')
 
 class TestReadMethods(unittest.TestCase):
     def initialize_standard(self):
@@ -256,25 +268,19 @@ class TestDeleteMethods(unittest.TestCase):
         memory.delete('d')
         with self.assertRaises(ValueError):
             memory.read('d')
-        self.assertEqual(memory._available.next.val, 3)
-        self.assertEqual(memory._available.next.next, None)
+        self.assertEqual(memory.availability(), '3')
         memory.delete('b')
         with self.assertRaises(ValueError):
             memory.read('b')
-        self.assertEqual(memory._available.next.val, 1)
-        self.assertEqual(memory._available.next.next.val, 3)
+        self.assertEqual(memory.availability(), '1 -> 3')
         memory.delete('f')
         with self.assertRaises(ValueError):
             memory.read('f')
-        self.assertEqual(memory._available.next.val, 1)
-        self.assertEqual(memory._available.next.next.val, 3)
-        self.assertEqual(memory._available.next.next.next.val, 5)
+            self.assertEqual(memory.availability(), '1 -> 3 -> 5')
         memory.delete('c')
         with self.assertRaises(ValueError):
             memory.read('c')
-        self.assertEqual(memory._available.next.val, 1)
-        self.assertEqual(memory._available.next.next.val, 2)
-        self.assertEqual(memory._available.next.next.next.val, 3)
+        self.assertEqual(memory.availability(), '1 -> 2 -> 3 -> 5')
 
     def test_delete_front(self):
         memory = self.initialize_standard()
@@ -282,8 +288,7 @@ class TestDeleteMethods(unittest.TestCase):
         memory.delete('a')
         with self.assertRaises(ValueError):
             memory.read('a')
-        self.assertEqual(memory._available.next.val, 0)
-        self.assertEqual(memory._available.next.next, None)
+        self.assertEqual(memory.availability(), '0')
 
     def test_delete_last(self):
         memory = self.initialize_standard()
@@ -291,8 +296,7 @@ class TestDeleteMethods(unittest.TestCase):
         memory.delete('h')
         with self.assertRaises(ValueError):
             memory.read('h')
-        self.assertEqual(memory._available.next.val, 7)
-        self.assertEqual(memory._available.next.next, None)
+        self.assertEqual(memory.availability(), '7')
 
     def test_delete_front_2(self):
         memory = self.initialize_standard()
@@ -300,8 +304,7 @@ class TestDeleteMethods(unittest.TestCase):
         memory.delete('a')
         with self.assertRaises(ValueError):
             memory.read('a')
-        self.assertEqual(memory._available.next.val, 0)
-        self.assertEqual(memory._available.next.next.val, 1)
+        self.assertEqual(memory.availability(), '0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7')
 
     def test_delete_middle_2(self):
         memory = self.initialize_standard()
@@ -310,12 +313,11 @@ class TestDeleteMethods(unittest.TestCase):
         memory.delete('a')
         with self.assertRaises(ValueError):
             memory.read('a')
-        self.assertEqual(memory._available.next.val, 0)
-        self.assertEqual(memory._available.next.next.val, 2)
+        self.assertEqual(memory.availability(), '0 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7')
         memory.delete('b')
         with self.assertRaises(ValueError):
             memory.read('b')
-        self.assertEqual(memory._available.next.next.val, 1)
+        self.assertEqual(memory.availability(), '0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7')
 
     def test_delete_last_2(self):
         memory = self.initialize_standard()
@@ -323,10 +325,7 @@ class TestDeleteMethods(unittest.TestCase):
         memory.save('b', 120, 'kb')
         memory.delete('a')
         memory.delete('b')
-        curr = memory._available.next
-        for i in range(8):
-            self.assertEqual(curr.val, i)
-            curr = curr.next
+        self.assertEqual(memory.availability(), '0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7')
 
     def test_delete_fragmented(self):
         memory = self.initialize_standard()
@@ -337,7 +336,7 @@ class TestDeleteMethods(unittest.TestCase):
         memory.delete('a')
         memory.delete('c')
         memory.delete('d')
-        self.assertEqual(memory._available.next.next.next.val, 4)
+        self.assertEqual(memory.availability(), '0 -> 3 -> 4 -> 5 -> 6 -> 7')
 
 if __name__ == '__main__':
     unittest.main()
