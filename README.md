@@ -26,9 +26,9 @@ file size. The algorithm can be specified using the `allocation_algorithm` param
 object.
 
 ## Testing
-Testing script included, run by using `python allocation_test.py` in console. Tests cover read, save, and delete
-functions, including testing of appropriate exceptions when conditions are met and testing of both the first fit and
-best fit allocation algorithms.
+Testing script included, run by using `python allocation_test.py` in console. Suite of 40 tests across 5 categories
+cover read, save, and delete functions, including testing of appropriate exceptions when conditions are met and testing
+of both the first fit and best fit allocation algorithms.
 
 ## CLI
 A CLI has been included for manual testing or other command line interactions with the file system manager. Run
