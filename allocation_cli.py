@@ -55,13 +55,16 @@ class AllocationCli():
                 print()
                 try:
                     memory.delete(file_id)
+                    print()
+                    print('Available Blocks: ' + memory.availability())
+                    print()
                 except ValueError as e:
                     print(e)
             elif choice == 4:
-                print(memory.list_files())
+                print('File List: ' + memory.list_files())
                 print()
             elif choice == 5:
-                print('Unallocated blocks: ' + memory.availability())
+                print('Unallocated Blocks: ' + memory.availability())
                 print()
             elif choice == 6:
                 exit = True

@@ -123,12 +123,15 @@ class Allocation:
         '''
         Blocks that have not been allocated
         '''
-        curr = self._available.next
-        string = str(curr.val)
-        curr = curr.next
-        while curr:
-            string += ' -> ' + str(curr.val)
+        if self._available.next:
+            curr = self._available.next
+            string = str(curr.val)
             curr = curr.next
+            while curr:
+                string += ' -> ' + str(curr.val)
+                curr = curr.next
+        else:
+            string = 'No available blocks'
         return string
 
     # Private support functions
