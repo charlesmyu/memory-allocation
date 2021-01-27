@@ -61,7 +61,13 @@ class AllocationCli():
                 except ValueError as e:
                     print(e)
             elif choice == 4:
-                print('File List: ' + memory.list_files())
+                print('File List: ')
+                files = memory.list_files()
+                if len(files) == 0:
+                    print('No files saved')
+                else:
+                    for file_id, blocks in files.items():
+                        print('{}: {}'.format(file_id, blocks))
                 print()
             elif choice == 5:
                 print('Unallocated Blocks: ' + memory.availability())

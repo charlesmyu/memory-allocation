@@ -10,36 +10,39 @@ class Allocation:
             block: size of block in Bytes
             available: linked list that tracks remaining empty space
             cache: hashmap (dict) that is used to store file_id -> list of assigned blocks for quick retrival
+            allocation_algorithm: algorithm chosen to allocate blocks
 
         :param capacity: Total capacity of memory
         :param block: Size of block of memory
         :param capacity_unit: Unit used for capacity. Must be one of B, KB, MB, GB, or TB. Defaults to MB.
         :param block_unit: Unit used for block size. Must be one of B, KB, MB, GB, or TB. Defaults to KB.
-        :param allocation_algorithm: Algorithm used for allocation. Either 'best' or 'first'.
+        :param allocation_algorithm: Algorithm used for allocation. Either 'best' or 'first'. Defaults to best if
+                                     nothing passed.
         '''
+        self._capacity_used = 0
         self._allocation_algorithm = allocation_algorithm
 
         # Translate all amounts to bytes for standardization
-        self._capacity_used = 0
         self._block = self._to_bytes(block, block_unit)
         self._capacity = self._to_bytes(capacity, capacity_unit)
 
-        print('Number of Blocks: {}'.format(str(int(self._capacity/self._block))))
+        num_blocks = int(self._capacity/self._block)
+        print('Number of Blocks: {}'.format(str(num_blocks)))
 
         print('Creating block list...')
         self._available = LinkedList()
-        self._available.fill(int(self._capacity/self._block))
+        self._available.fill(num_blocks)
         print('Creating cache...')
         self._cache = {}
         print('Done!')
 
     def save(self, file_id: str, size: int, size_unit: str) -> list:
         '''
-        Takes file_id and saves it in a given location, returns list of block sets that is assigned to the file
+        Takes file_id and saves it in a given location, returns list of blocks that is assigned to the file
 
         :param file_id: desired file_id as a string
         :param size: size of given file
-        :param size_unit: unit of file size. Must be one of B, KB, MB, or GB
+        :param size_unit: unit used for file size. Must be one of B, KB, MB, or GB
         :return: list of blocks that is assigned to the file given
         '''
         if self._cache.get(file_id):
@@ -65,7 +68,7 @@ class Allocation:
 
     def delete(self, file_id: str) -> None:
         '''
-        Removes allocation for provided file_id, and returns it's assigned blocks to the pool to be re-allocated.
+        Removes allocation for provided file_id, and returns its blocks to the pool to be re-allocated.
 
         :param file_id: desired file_id as a string
         '''
@@ -94,7 +97,7 @@ class Allocation:
         else:
             raise ValueError('file_id does not exist')
 
-    # Setters and getters. All returned in Bytes
+    # Setters and Getters
     def get_capacity(self) -> int:
         '''
         Capacity in bytes
